@@ -2,7 +2,7 @@
 
 namespace StellarWallet.Domain.Interfaces.Result
 {
-    public interface IResult<TValue, TError>
+    public interface IResult<out TValue, out TError>
     {
         TValue Value { get; }
         bool IsSuccess { get; }
