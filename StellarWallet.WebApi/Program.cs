@@ -16,7 +16,6 @@ string environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONM
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddUserSecrets<Program>();
 builder.Configuration.AddJsonFile($"appsettings.{environmentName}.json");
 
 // Add services to the container.
@@ -39,11 +38,11 @@ builder.Services.AddAuthentication(config =>
 
         ValidAudience = builder.Configuration["Jwt:Audience"],
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new Exception("No JWT Key found."))),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured."))),
     };
 });
 
-var connectionString = builder.Configuration.GetConnectionString("StellarWalletDatabase") ?? throw new Exception("Undefined connection string");
+var connectionString = builder.Configuration.GetConnectionString("StellarWalletDatabase") ?? throw new InvalidOperationException("Undefined connection string");
 
 // Add roles authorization
 builder.Services.AddAuthorizationBuilder()
@@ -69,11 +68,15 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var corsPolicyName = "AllowClient";
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowBlazor", builder =>
+    var origins = builder.Configuration.GetValue<string>("AllowedHosts") ?? throw new InvalidOperationException("Allowed hosts are not configured.");
+    options.AddPolicy(corsPolicyName, builder =>
     {
-        builder.AllowAnyOrigin()
+        builder.WithOrigins(origins)
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
@@ -81,7 +84,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseCors("AllowBlazor");
+app.UseCors(corsPolicyName);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
