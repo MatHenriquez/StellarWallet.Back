@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StellarWallet.Application.Dtos.Requests;
 using StellarWallet.Application.Interfaces;
-using StellarWallet.Domain.Errors;
 
 namespace StellarWallet.WebApi.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("[controller]")]
     public class TransactionController(ITransactionService transactionService) : ControllerBase
     {
@@ -15,116 +15,121 @@ namespace StellarWallet.WebApi.Controllers
         private readonly string _accessToken = "access_token";
 
         [HttpPost("AccountCreation")]
-        [Authorize]
         public async Task<IActionResult> CreateAccount()
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync(_accessToken) ?? throw new UnauthorizedAccessException();
+                string? jwt = await HttpContext.GetTokenAsync(_accessToken);
+                if (jwt is null)
+                {
+                    return Unauthorized();
+                }
 
-                return Ok(_transactionService.CreateAccount(jwt));
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized();
+                var result = await _transactionService.CreateAccount(jwt);
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "User not found")
-                    return NotFound(e.Message);
-                else if (e.Message == "Unauthorized")
-                    return Unauthorized();
-
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
         [HttpPost("Payment")]
-        [Authorize]
         public async Task<IActionResult> SendPayment([FromBody] SendPaymentDto sendPaymentDto)
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync(_accessToken) ?? throw new UnauthorizedAccessException();
+                string? jwt = await HttpContext.GetTokenAsync(_accessToken);
+                if (jwt is null)
+                {
+                    return Unauthorized();
+                }
 
                 var paymentResult = await _transactionService.SendPayment(sendPaymentDto, jwt);
 
-                if (paymentResult.IsSuccess)
-                {
-                    return Ok();
-                }
-                else
+                if (!paymentResult.IsSuccess)
                 {
                     return StatusCode(paymentResult.Error.Code, paymentResult.Error.Message);
                 }
+                return Ok();
             }
-            catch (UnauthorizedAccessException)
+            catch
             {
-                return Unauthorized();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError, "There was an error processing the payment.");
             }
         }
 
         [HttpGet("Payment")]
-        [Authorize]
         public async Task<IActionResult> GetPayments([FromQuery] int pageNumber, int pageSize)
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync(_accessToken) ?? throw new UnauthorizedAccessException();
+                string? jwt = await HttpContext.GetTokenAsync(_accessToken);
+                if (jwt is null)
+                {
+                    return Unauthorized();
+                }
 
-                return Ok(await _transactionService.GetTransaction(jwt, pageNumber, pageSize));
+                var result = await _transactionService.GetTransaction(jwt, pageNumber, pageSize);
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "User not found")
-                    return NotFound(e.Message);
-                else if (e.Message == "Unauthorized")
-                    return Unauthorized();
-
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
         [HttpPost("TestFund")]
-        [Authorize]
         public async Task<IActionResult> GetTestFunds([FromBody] GetTestFundsDto getTestFundsDto)
         {
             string? jwt = await HttpContext.GetTokenAsync(_accessToken);
             if (jwt is null)
-                return Unauthorized();
+            { return Unauthorized(); }
 
-            var getFundsResponse = await _transactionService.GetTestFunds(getTestFundsDto.PublicKey);
+            var result = await _transactionService.GetTestFunds(getTestFundsDto.PublicKey);
 
-            bool wasFunded = getFundsResponse.IsSuccess;
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.Error.Code, result);
+            }
 
-            if (wasFunded)
-                return Ok();
-            else
-                return StatusCode(StatusCodes.Status500InternalServerError, "Funds not received");
+            return Ok(result);
         }
 
         [HttpGet("Balance")]
-        [Authorize]
         public async Task<IActionResult> GetBalances([FromQuery] GetBalancesDto getBalancesDto)
         {
             string? jwt = await HttpContext.GetTokenAsync(_accessToken);
             if (jwt is null)
+            {
                 return Unauthorized();
+            }
 
             try
             {
-                return Ok(await _transactionService.GetBalances(getBalancesDto));
+                var result = await _transactionService.GetBalances(getBalancesDto);
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "User not found")
-                    return NotFound(e.Message);
-
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
