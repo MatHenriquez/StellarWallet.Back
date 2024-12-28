@@ -7,7 +7,7 @@ namespace StellarWallet.Application.Interfaces
 {
     public interface IUserService
     {
-        Task<IEnumerable<UserDto>> GetAll();
+        Task<Result<IEnumerable<UserDto>, CustomError>> GetAll();
         Task<Result<UserDto, CustomError>> GetById(int id, string jwt);
         Task<Result<LoggedDto, CustomError>> Add(UserCreationDto user);
         Task<Result<bool, CustomError>> Update(UserUpdateDto user, string jwt);
