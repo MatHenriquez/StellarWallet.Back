@@ -21,19 +21,19 @@ namespace StellarWallet.Infrastructure.Utilities
             if (File.Exists($"appsettings.{settedEnvironment}.json"))
                 configurationBuilder.AddJsonFile($"appsettings.{settedEnvironment}.json", optional: false);
             else
-                throw new Exception("Configuration file not found");
+                throw new FileNotFoundException("Configuration file not found");
 
             return configurationBuilder.Build();
         }
 
         public static string GetConnectionString(string? environment)
         {
-            return BuildConfig(SetEnvironment(environment)).GetConnectionString("StellarWallet") ?? throw new Exception("Undefined connection string");
+            return BuildConfig(SetEnvironment(environment)).GetConnectionString("StellarWallet") ?? throw new InvalidOperationException("Undefined connection string");
         }
 
         public static string GetSettingVariable(string sectionName, string variableName, string? environment)
         {
-            return BuildConfig(SetEnvironment(environment)).GetSection(sectionName).GetValue<string>(variableName) ?? throw new Exception("Undefined variable");
+            return BuildConfig(SetEnvironment(environment)).GetSection(sectionName).GetValue<string>(variableName) ?? throw new InvalidOperationException("Undefined variable");
         }
 
         private readonly static Func<string?, string> SetEnvironment = (string? environment) =>
