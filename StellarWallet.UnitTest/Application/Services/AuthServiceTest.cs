@@ -25,7 +25,7 @@ namespace StellarWallet.UnitTest.Application.Services
 
             var loginDto = new LoginDto("john.doe@mail.com", "MyPassword123.");
 
-            mockUnitOfWork.Setup(x => x.User.GetBy("Email", loginDto.Email)).ReturnsAsync(new User(
+            mockUnitOfWork.Setup(x => x.User.GetBy(nameof(User.Email), loginDto.Email)).ReturnsAsync(new User(
                 "John",
                 "Doe",
                 "john.doe@mail.com",
@@ -36,7 +36,7 @@ namespace StellarWallet.UnitTest.Application.Services
 
             mockEncryptionService.Setup(x => x.Verify(loginDto.Password, "EncryptedPassword")).Returns(true);
 
-            mockJwtService.Setup(x => x.CreateToken("john.doe@mail.com", "user")).Returns(Result<string, DomainError>.Success("token"));
+            mockJwtService.Setup(x => x.CreateToken("john.doe@mail.com", "user")).Returns(Result<string, CustomError>.Success("token"));
 
             var result = await sut.Login(loginDto);
 
@@ -57,7 +57,7 @@ namespace StellarWallet.UnitTest.Application.Services
             Mock<User> user = new("John", "Doe", "john.doe@mail.com", "EncryptedPassword", "GBXBDKPGYO74VVO64A7PBIHV7XN4QH4PJIRBSQT4OVE4U7JYY345PQMA", "SC6KTRKOT33RRH2KXK2BMGJWJ7TE5NQGRE5NIWTBGNMSPLKGQ2C63KDB", "admin");
 
 
-            mockUnitOfWork.Setup(x => x.User.GetBy("Email", "john.doe@mail.com")).ReturnsAsync(user.Object);
+            mockUnitOfWork.Setup(x => x.User.GetBy(nameof(User.Email), "john.doe@mail.com")).ReturnsAsync(user.Object);
 
             var loginDto = new LoginDto("john.doe@mail.com", "MyPassword123.");
             mockEncryptionService.Setup(x => x.Verify(loginDto.Password, "EncryptedPassword")).Returns(false);
@@ -77,7 +77,7 @@ namespace StellarWallet.UnitTest.Application.Services
             var sut = new AuthService(mockJwtService.Object, mockEncryptionService.Object, mockUnitOfWork.Object);
 
             var loginDto = new LoginDto("john.doe@mail.com", "MyPassword123.");
-            mockUnitOfWork.Setup(x => x.User.GetBy("Email", loginDto.Email)).ReturnsAsync((User?)null);
+            mockUnitOfWork.Setup(x => x.User.GetBy(nameof(User.Email), loginDto.Email)).ReturnsAsync((User?)null);
 
             Assert.ThrowsAsync<Exception>(() => sut.Login(loginDto));
         }
@@ -94,7 +94,7 @@ namespace StellarWallet.UnitTest.Application.Services
             var jwt = "token";
             var email = "john.doe@mail.com";
 
-            mockJwtService.Setup(x => x.DecodeToken(jwt)).Returns(Result<string, DomainError>.Success(email));
+            mockJwtService.Setup(x => x.DecodeToken(jwt)).Returns(Result<string, CustomError>.Success(email));
 
             var result = sut.AuthenticateEmail(jwt, email);
 
