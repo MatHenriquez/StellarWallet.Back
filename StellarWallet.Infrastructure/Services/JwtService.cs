@@ -15,12 +15,13 @@ namespace StellarWallet.Infrastructure.Services
         private readonly string? issuer = config.GetSection("Jwt").GetSection("Issuer").Value;
         private readonly string? audience = config.GetSection("Jwt").GetSection("Audience").Value;
 
-        public Result<string, DomainError> CreateToken(string email, string role)
+        public Result<string, CustomError> CreateToken(string email, string role)
         {
             if (secretKey is null)
             {
-                return Result<string, DomainError>.Failure(DomainError.NotFound("No secret key found."));
+                return CustomError.NotFound("No secret key found.");
             }
+
             var keyBytes = Encoding.ASCII.GetBytes(secretKey);
             var claims = new ClaimsIdentity();
 
@@ -38,16 +39,16 @@ namespace StellarWallet.Infrastructure.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenConfig = tokenHandler.CreateToken(tokenDescriptor);
 
-            return Result<string, DomainError>.Success(tokenHandler.WriteToken(tokenConfig));
+            return tokenHandler.WriteToken(tokenConfig);
         }
 
-        public Result<string, DomainError> DecodeToken(string token)
+        public Result<string, CustomError> DecodeToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
 
             if (secretKey is null)
             {
-                return Result<string, DomainError>.Failure(DomainError.NotFound("No secret key found."));
+                return CustomError.NotFound("No secret key found.");
             }
 
             var keyBytes = Encoding.ASCII.GetBytes(secretKey);
@@ -64,7 +65,7 @@ namespace StellarWallet.Infrastructure.Services
 
             if (claimsPrincipal is null)
             {
-                return Result<string, DomainError>.Failure(DomainError.NotFound("No claims found."));
+                return CustomError.NotFound("No claims found.");
             }
 
             var allClaims = claimsPrincipal.Claims.ToList();
@@ -74,10 +75,10 @@ namespace StellarWallet.Infrastructure.Services
 
             if (emailClaim is null || roleClaim is null)
             {
-                return Result<string, DomainError>.Failure(DomainError.NotFound("Email or role claim not found."));
+                return CustomError.NotFound("Email or role claim not found.");
             }
 
-            return Result<string, DomainError>.Success(emailClaim.Value);
+            return emailClaim.Value;
         }
     }
 }

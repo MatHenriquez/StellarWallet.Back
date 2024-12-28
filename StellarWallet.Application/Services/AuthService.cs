@@ -14,60 +14,61 @@ namespace StellarWallet.Application.Services
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
         private readonly IJwtService _jwtService = jwtService;
         private readonly IEncryptionService _encryptionService = encryptionService;
+        private readonly CustomError _userNotFoundError = CustomError.NotFound("User not found");
 
-        public async Task<Result<LoggedDto, DomainError>> Login(LoginDto loginDto)
+        public async Task<Result<LoggedDto, CustomError>> Login(LoginDto loginDto)
         {
-            User? user = await _unitOfWork.User.GetBy("Email", loginDto.Email);
+            User? user = await _unitOfWork.User.GetBy(nameof(User.Email), loginDto.Email);
             if (user is null)
             {
-                return Result<LoggedDto, DomainError>.Failure(DomainError.NotFound("User not found"));
+                return _userNotFoundError;
             }
 
             if (!_encryptionService.Verify(loginDto.Password, user.Password))
             {
-                return Result<LoggedDto, DomainError>.Failure(DomainError.Unauthorized("Invalid credentials"));
+                return CustomError.Unauthorized();
             }
 
             var createdTokenResponse = _jwtService.CreateToken(user.Email, user.Role);
 
             if (!createdTokenResponse.IsSuccess)
             {
-                return Result<LoggedDto, DomainError>.Failure(createdTokenResponse.Error);
+                return CustomError.InternalError(createdTokenResponse.Error.Message);
             }
 
             var createdToken = createdTokenResponse.Value;
 
-            return Result<LoggedDto, DomainError>.Success(new LoggedDto(createdTokenResponse.IsSuccess, createdToken, user.PublicKey));
+            return new LoggedDto(createdTokenResponse.IsSuccess, createdToken, user.PublicKey);
         }
 
-        public Result<bool, DomainError> AuthenticateEmail(string jwt, string email)
+        public Result<bool, CustomError> AuthenticateEmail(string jwt, string email)
         {
             var jwtEmailDecoding = _jwtService.DecodeToken(jwt);
 
             if (!jwtEmailDecoding.IsSuccess)
             {
-                return Result<bool, DomainError>.Failure(jwtEmailDecoding.Error);
+                return CustomError.InternalError(jwtEmailDecoding.Error.Message);
             }
 
             var jwtEmail = jwtEmailDecoding.Value;
 
-            return Result<bool, DomainError>.Success(jwtEmail.Equals(email));
+            return jwtEmail.Equals(email);
         }
 
-        public async Task<Result<bool, DomainError>> AuthenticateToken(string jwt)
+        public async Task<Result<bool, CustomError>> AuthenticateToken(string jwt)
         {
             var jwtEmailResponse = _jwtService.DecodeToken(jwt);
 
             if (!jwtEmailResponse.IsSuccess)
             {
-                return Result<bool, DomainError>.Failure(jwtEmailResponse.Error);
+                return CustomError.InternalError(jwtEmailResponse.Error.Message);
             }
 
             var email = jwtEmailResponse.Value;
 
-            var userExists = await _unitOfWork.User.GetBy("Email", email) is not null;
+            var userExists = await _unitOfWork.User.GetBy(nameof(User.Email), email) is not null;
 
-            return Result<bool, DomainError>.Success(userExists);
+            return userExists;
         }
     }
 }

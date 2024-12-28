@@ -7,6 +7,7 @@
         Conflict,
         ExternalServiceError,
         UnauthorizedError,
-        InternalError
+        InternalError,
+        Forbidden
     }
 }

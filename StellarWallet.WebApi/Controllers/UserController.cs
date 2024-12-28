@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StellarWallet.Application.Dtos.Requests;
+using StellarWallet.Application.Dtos.Responses;
 using StellarWallet.Application.Interfaces;
+using StellarWallet.Domain.Errors;
+using StellarWallet.Domain.Result;
 
 namespace StellarWallet.WebApi.Controllers
 {
@@ -39,18 +42,24 @@ namespace StellarWallet.WebApi.Controllers
         }
 
         [HttpPost()]
-        public async Task<IActionResult> Post(UserCreationDto user)
+        public async Task<ActionResult<Result<LoggedDto, CustomError>>> Post(UserCreationDto user)
         {
             try
             {
-                return Ok(await _userService.Add(user));
+                var result = await _userService.Add(user);
+
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return StatusCode(result.Error.Code, result.Error.Message);
+                }
             }
             catch (Exception e)
             {
-                if (e.Message == "User already exists")
-                    return BadRequest(e.Message);
-                else
-                    return StatusCode(500, $"Internal server error: {e.Message}");
+                return StatusCode(500, $"Internal server error: {e.Message}");
             }
         }
 

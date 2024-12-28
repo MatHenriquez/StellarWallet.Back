@@ -5,6 +5,7 @@ using StellarWallet.Application.Utilities;
 using StellarWallet.Domain.Entities;
 using StellarWallet.Domain.Errors;
 using StellarWallet.Domain.Interfaces.Persistence;
+using StellarWallet.Domain.Interfaces.Result;
 using StellarWallet.Domain.Interfaces.Services;
 using StellarWallet.Domain.Result;
 using StellarWallet.Domain.Structs;
@@ -17,34 +18,39 @@ namespace StellarWallet.Application.Services
         private readonly IJwtService _jwtService = jwtService;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
         private readonly IAuthService _authService = authService;
+        private readonly CustomError _userNotFoundError = CustomError.NotFound("User not found");
 
-        public async Task<Result<BlockchainAccount, DomainError>> CreateAccount(string jwt)
+        public async Task<Result<BlockchainAccount, CustomError>> CreateAccount(string jwt)
         {
             var userEmail = _jwtService.DecodeToken(jwt);
-
-            User? user = await _unitOfWork.User.GetBy("Email", userEmail.Value);
-            if (user is null)
+            if (!userEmail.IsSuccess)
             {
-                return Result<BlockchainAccount, DomainError>.Failure(DomainError.NotFound("User not found"));
+                return CustomError.Unauthorized();
             }
 
-            return Result<BlockchainAccount, DomainError>.Success(_blockchainService.CreateAccount(user.Id));
+            User? user = await _unitOfWork.User.GetBy(nameof(User.Email), userEmail.Value);
+            if (user is null)
+            {
+                return _userNotFoundError;
+            }
+
+            return _blockchainService.CreateAccount(user.Id);
         }
 
-        public async Task<Result<bool, DomainError>> SendPayment(SendPaymentDto sendPaymentDto, string jwt)
+        public async Task<Result<bool, CustomError>> SendPayment(SendPaymentDto sendPaymentDto, string jwt)
         {
             var userEmail = _jwtService.DecodeToken(jwt);
-            User? user = await _unitOfWork.User.GetBy("Email", userEmail.Value);
+            User? user = await _unitOfWork.User.GetBy(nameof(User.Email), userEmail.Value);
 
             if (user is null)
             {
-                return Result<bool, DomainError>.Failure(DomainError.NotFound("User not found"));
+                return _userNotFoundError;
             }
 
             var isAnAuthorizedUser = _authService.AuthenticateEmail(jwt, userEmail.Value);
             if (!isAnAuthorizedUser.IsSuccess)
             {
-                return Result<bool, DomainError>.Failure(DomainError.Unauthorized("Unauthorized"));
+                return CustomError.Unauthorized();
             }
 
             var transactionResponse = await _blockchainService.SendPayment(user.SecretKey, sendPaymentDto.DestinationPublicKey, sendPaymentDto.Amount.ToString(), sendPaymentDto.AssetIssuer, sendPaymentDto.AssetCode, sendPaymentDto.Memo ?? String.Empty);
@@ -53,39 +59,39 @@ namespace StellarWallet.Application.Services
 
             if (!transactionCompleted)
             {
-                return transactionResponse;
+                return CustomError.ExternalServiceError(transactionResponse?.Error?.Message);
             }
 
-            return Result<bool, DomainError>.Success(transactionCompleted);
+            return transactionCompleted;
         }
 
-        public async Task<Result<TransactionsDto, DomainError>> GetTransaction(string jwt, int pageNumber, int pageSize)
+        public async Task<Result<TransactionsDto, CustomError>> GetTransaction(string jwt, int pageNumber, int pageSize)
         {
             var userEmailDecoding = _jwtService.DecodeToken(jwt);
 
             if (!userEmailDecoding.IsSuccess)
             {
-                return Result<TransactionsDto, DomainError>.Failure(DomainError.Unauthorized("Unauthorized"));
+                return Result<TransactionsDto, CustomError>.Failure(CustomError.Unauthorized());
             }
 
-            User? user = await _unitOfWork.User.GetBy("Email", userEmailDecoding.Value);
+            User? user = await _unitOfWork.User.GetBy(nameof(User.Email), userEmailDecoding.Value);
 
             if (user is null)
             {
-                return Result<TransactionsDto, DomainError>.Failure(DomainError.NotFound("User not found"));
+                return _userNotFoundError;
             }
 
             var isAnAuthorizedUser = _authService.AuthenticateEmail(jwt, userEmailDecoding.Value);
             if (!isAnAuthorizedUser.IsSuccess)
             {
-                return Result<TransactionsDto, DomainError>.Failure(DomainError.Unauthorized("Unauthorized"));
+                CustomError.Unauthorized();
             }
 
             var getPaymentsResponse = await _blockchainService.GetPayments(user.PublicKey);
 
             if (!getPaymentsResponse.IsSuccess)
             {
-                return Result<TransactionsDto, DomainError>.Failure(getPaymentsResponse.Error);
+                return CustomError.ExternalServiceError(getPaymentsResponse.Error.Message);
             }
 
             BlockchainPayment[] allPayments = getPaymentsResponse.Value;
@@ -99,21 +105,28 @@ namespace StellarWallet.Application.Services
 
             TransactionsDto paginatedPaymentsDto = new(paginatedPayments, totalPages);
 
-            return Result<TransactionsDto, DomainError>.Success(paginatedPaymentsDto);
+            return Result<TransactionsDto, CustomError>.Success(paginatedPaymentsDto);
         }
 
-        public async Task<Result<bool, DomainError>> GetTestFunds(string publicKey)
+        public async Task<Result<bool, CustomError>> GetTestFunds(string publicKey)
         {
             var getTestFundsResponse = await _blockchainService.GetTestFunds(publicKey);
-            if (!getTestFundsResponse.IsSuccess) { return getTestFundsResponse; }
+            if (!getTestFundsResponse.IsSuccess)
+            {
+                return CustomError.ExternalServiceError(getTestFundsResponse.Error.Message);
+            }
 
-            return Result<bool, DomainError>.Success(getTestFundsResponse.Value);
+            return getTestFundsResponse.Value;
         }
 
-        public async Task<Result<FoundBalancesDto, DomainError>> GetBalances(GetBalancesDto getBalancesDto)
+        public async Task<Result<FoundBalancesDto, CustomError>> GetBalances(GetBalancesDto getBalancesDto)
         {
             var getBalancesResponse = await _blockchainService.GetBalances(getBalancesDto.PublicKey);
-            if (!getBalancesResponse.IsSuccess) { return Result<FoundBalancesDto, DomainError>.Failure(getBalancesResponse.Error); }
+
+            if (!getBalancesResponse.IsSuccess)
+            {
+                return CustomError.ExternalServiceError(getBalancesResponse.Error.Message);
+            }
 
             List<AccountBalances> balances = getBalancesResponse.Value;
 
@@ -125,7 +138,7 @@ namespace StellarWallet.Application.Services
             int totalPages = Paginate.GetTotalPages(balances.Count, getBalancesDto.PageSize);
             var paginatedBalances = Paginate.PaginateQuery<AccountBalances>(balances, getBalancesDto.PageNumber, getBalancesDto.PageSize).ToList();
 
-            return Result<FoundBalancesDto, DomainError>.Success(new FoundBalancesDto(paginatedBalances, totalPages));
+            return new FoundBalancesDto(paginatedBalances, totalPages);
         }
     }
 }

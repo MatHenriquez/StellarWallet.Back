@@ -1,25 +1,42 @@
-﻿using StellarWallet.Domain.Errors;
-using StellarWallet.Domain.Interfaces.Result;
+﻿using StellarWallet.Domain.Interfaces.Result;
 using System.Text.Json.Serialization;
 
 namespace StellarWallet.Domain.Result
 {
     public class Result<TValue, TError> : IResult<TValue, TError>
     {
-        public TValue Value { get; }
-        public bool IsSuccess { get; }
-        public TError Error { get; }
+        public bool IsSuccess { get; private set; }
+        public TValue Value { get; private set; }
+        public TError Error { get; private set; }
 
         [JsonConstructor]
-        private Result(TValue value, bool isSuccess, TError error)
+        public Result(bool isSuccess, TValue? value, TError? error)
         {
-            Value = value;
             IsSuccess = isSuccess;
-            Error = error;
+            Value = value ?? default!;
+            Error = error ?? default!;
         }
 
-        public static Result<TValue, TError> Success(TValue value) => new(value, true, default);
+        public Result() { }
 
-        public static Result<TValue, TError> Failure(TError error) => new(default, false, error);
+        private Result(TValue value)
+        {
+            IsSuccess = true;
+            Value = value;
+            Error = default!;
+        }
+
+        private Result(TError error)
+        {
+            IsSuccess = false;
+            Error = error;
+            Value = default!;
+        }
+
+        public static Result<TValue, TError> Success(TValue value) => new(value);
+        public static Result<TValue, TError> Failure(TError error) => new(error);
+
+        public static implicit operator Result<TValue, TError>(TValue success) => Success(success);
+        public static implicit operator Result<TValue, TError>(TError error) => Failure(error);
     }
 }

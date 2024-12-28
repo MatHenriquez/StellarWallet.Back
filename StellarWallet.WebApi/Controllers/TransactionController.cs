@@ -12,6 +12,7 @@ namespace StellarWallet.WebApi.Controllers
     public class TransactionController(ITransactionService transactionService) : ControllerBase
     {
         private readonly ITransactionService _transactionService = transactionService;
+        private readonly string _accessToken = "access_token";
 
         [HttpPost("AccountCreation")]
         [Authorize]
@@ -19,9 +20,13 @@ namespace StellarWallet.WebApi.Controllers
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync("access_token") ?? throw new Exception("Unauthorized");
+                string jwt = await HttpContext.GetTokenAsync(_accessToken) ?? throw new UnauthorizedAccessException();
 
                 return Ok(_transactionService.CreateAccount(jwt));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized();
             }
             catch (Exception e)
             {
@@ -40,7 +45,8 @@ namespace StellarWallet.WebApi.Controllers
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync("access_token") ?? throw new Exception("Unauthorized");
+                string jwt = await HttpContext.GetTokenAsync(_accessToken) ?? throw new UnauthorizedAccessException();
+
                 var paymentResult = await _transactionService.SendPayment(sendPaymentDto, jwt);
 
                 if (paymentResult.IsSuccess)
@@ -49,18 +55,12 @@ namespace StellarWallet.WebApi.Controllers
                 }
                 else
                 {
-                    int statusCode = paymentResult.Error.ErrorType switch
-                    {
-                        ErrorType.NotFound => StatusCodes.Status404NotFound,
-                        ErrorType.Invalid => StatusCodes.Status400BadRequest,
-                        ErrorType.Conflict => StatusCodes.Status409Conflict,
-                        ErrorType.ExternalServiceError => StatusCodes.Status503ServiceUnavailable,
-                        ErrorType.UnauthorizedError => StatusCodes.Status401Unauthorized,
-                        _ => StatusCodes.Status500InternalServerError
-                    };
-
-                    return StatusCode(statusCode, paymentResult.Error.ErrorMessage);
+                    return StatusCode(paymentResult.Error.Code, paymentResult.Error.Message);
                 }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized();
             }
             catch (Exception e)
             {
@@ -75,7 +75,7 @@ namespace StellarWallet.WebApi.Controllers
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync("access_token") ?? throw new Exception("Unauthorized");
+                string jwt = await HttpContext.GetTokenAsync(_accessToken) ?? throw new UnauthorizedAccessException();
 
                 return Ok(await _transactionService.GetTransaction(jwt, pageNumber, pageSize));
             }
@@ -94,7 +94,7 @@ namespace StellarWallet.WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> GetTestFunds([FromBody] GetTestFundsDto getTestFundsDto)
         {
-            string? jwt = await HttpContext.GetTokenAsync("access_token");
+            string? jwt = await HttpContext.GetTokenAsync(_accessToken);
             if (jwt is null)
                 return Unauthorized();
 
@@ -112,7 +112,7 @@ namespace StellarWallet.WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> GetBalances([FromQuery] GetBalancesDto getBalancesDto)
         {
-            string? jwt = await HttpContext.GetTokenAsync("access_token");
+            string? jwt = await HttpContext.GetTokenAsync(_accessToken);
             if (jwt is null)
                 return Unauthorized();
 

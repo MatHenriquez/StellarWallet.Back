@@ -8,10 +8,10 @@ namespace StellarWallet.Application.Interfaces
     public interface IUserService
     {
         Task<IEnumerable<UserDto>> GetAll();
-        Task<Result<UserDto, DomainError>> GetById(int id, string jwt);
-        Task<Result<LoggedDto, DomainError>> Add(UserCreationDto user);
-        Task<Result<bool, DomainError>> Update(UserUpdateDto user, string jwt);
-        Task<Result<bool, DomainError>> Delete(int id, string jwt);
-        Task<Result<bool, DomainError>> AddWallet(AddWalletDto wallet, string jwt);
+        Task<Result<UserDto, CustomError>> GetById(int id, string jwt);
+        Task<Result<LoggedDto, CustomError>> Add(UserCreationDto user);
+        Task<Result<bool, CustomError>> Update(UserUpdateDto user, string jwt);
+        Task<Result<bool, CustomError>> Delete(int id, string jwt);
+        Task<Result<bool, CustomError>> AddWallet(AddWalletDto wallet, string jwt);
     }
 }
