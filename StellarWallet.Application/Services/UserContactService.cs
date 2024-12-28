@@ -17,93 +17,96 @@ namespace StellarWallet.Application.Services
         private readonly IJwtService _jwtService = jwtService;
         private readonly IAuthService _authService = authService;
         private readonly IMapper _mapper = mapper;
+        private readonly CustomError _userNotFoundError = CustomError.NotFound("User not found");
 
-        public async Task<Result<bool, DomainError>> Add(AddContactDto userContact, string jwt)
+        public async Task<Result<bool, CustomError>> Add(AddContactDto userContact, string jwt)
         {
             var userEmailDecoding = _jwtService.DecodeToken(jwt);
 
             if (!userEmailDecoding.IsSuccess)
             {
-                return Result<bool, DomainError>.Failure(userEmailDecoding.Error);
+                return CustomError.InternalError(userEmailDecoding.Error.Message);
             }
 
-            User? foundUser = await _unitOfWork.User.GetBy("Email", userEmailDecoding.Value);
+            User? foundUser = await _unitOfWork.User.GetBy(nameof(User.Email), userEmailDecoding.Value);
 
             if (foundUser is null)
             {
-                return Result<bool, DomainError>.Failure(DomainError.NotFound("User not found"));
+                return _userNotFoundError;
             }
 
-            var IsValidEmail = _authService.AuthenticateEmail(jwt, foundUser.Email);
+            var isValidEmail = _authService.AuthenticateEmail(jwt, foundUser.Email);
 
-            if (!IsValidEmail.IsSuccess)
+            if (!isValidEmail.IsSuccess)
             {
-                return Result<bool, DomainError>.Failure(IsValidEmail.Error);
+                return isValidEmail.Error;
             }
 
             if (foundUser.UserContacts?.Count >= 10)
-                throw new Exception("User has reached the maximum number of contacts");
+            {
+                return CustomError.Conflict("User has reached the maximum number of contacts");
+            }
 
             if (foundUser.UserContacts is not null)
                 foreach (UserContact contact in foundUser.UserContacts)
                 {
                     if (contact.Alias == userContact.Alias)
-                        throw new Exception("Contact already exists");
+                    {
+                        return CustomError.Conflict("Contact already exists");
+                    }
                 }
 
             await _unitOfWork.UserContact.Add(new UserContact(userContact.Alias, foundUser.Id, userContact.PublicKey));
 
-            return Result<bool, DomainError>.Success(IsValidEmail.IsSuccess);
+            return isValidEmail.IsSuccess;
         }
 
-        public async Task<Result<bool, DomainError>> Delete(int id)
+        public async Task<Result<bool, CustomError>> Delete(int id)
         {
             UserContact? userContactFound = await _unitOfWork.UserContact.GetById(id);
 
             if (userContactFound is null)
             {
-                return Result<bool, DomainError>.Failure(DomainError.NotFound("Contact not found"));
+                CustomError.NotFound("Contact not found");
             }
 
             await _unitOfWork.UserContact.Delete(id);
 
-            return Result<bool, DomainError>.Success(true);
+            return true;
         }
 
-        public async Task<Result<IEnumerable<UserContactsDto>, DomainError>> GetAll(int userId, string jwt)
+        public async Task<Result<IEnumerable<UserContactsDto>, CustomError>> GetAll(int id, string jwt)
         {
-            var foundUser = await _userService.GetById(userId, jwt);
+            var foundUser = await _userService.GetById(id, jwt);
             if (foundUser is null)
             {
-                return Result<IEnumerable<UserContactsDto>, DomainError>.Failure(DomainError.NotFound("User not found"));
+                return _userNotFoundError;
             }
 
             var IsValidEmail = _authService.AuthenticateEmail(jwt, foundUser.Value.Email);
 
             if (!IsValidEmail.IsSuccess)
             {
-                return Result<IEnumerable<UserContactsDto>, DomainError>.Failure(IsValidEmail.Error);
+                return CustomError.Unauthorized();
             }
 
-            IEnumerable<UserContact> userContacts = await _unitOfWork.UserContact.GetAll(uc => uc.UserId == userId);
+            IEnumerable<UserContact> userContacts = await _unitOfWork.UserContact.GetAll(uc => uc.UserId == id);
 
             if (userContacts is null)
             {
-                return Result<IEnumerable<UserContactsDto>, DomainError>.Failure(DomainError.NotFound("Contacts not found"));
+                return CustomError.NotFound("Contacts not found");
             }
 
-            var mappedUserContacts = _mapper.Map<UserContactsDto[]>(userContacts);
-
-            return Result<IEnumerable<UserContactsDto>, DomainError>.Success(mappedUserContacts);
+            return _mapper.Map<UserContactsDto[]>(userContacts);
         }
 
-        public async Task<Result<bool, DomainError>> Update(UpdateContactDto userContact)
+        public async Task<Result<bool, CustomError>> Update(UpdateContactDto userContact)
         {
             UserContact? foundUserContact = await _unitOfWork.UserContact.GetById(userContact.Id);
 
             if (foundUserContact is null)
             {
-                return Result<bool, DomainError>.Failure(DomainError.NotFound("Contact not found"));
+                return CustomError.NotFound("Contact not found");
             }
 
             if (userContact.Alias is not null)
@@ -113,7 +116,7 @@ namespace StellarWallet.Application.Services
 
             _unitOfWork.UserContact.Update(foundUserContact);
 
-            return Result<bool, DomainError>.Success(true);
+            return true;
         }
     }
 }
