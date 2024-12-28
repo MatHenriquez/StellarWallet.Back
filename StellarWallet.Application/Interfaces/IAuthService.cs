@@ -7,8 +7,8 @@ namespace StellarWallet.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<Result<LoggedDto, DomainError>> Login(LoginDto loginDto);
-        Result<bool, DomainError> AuthenticateEmail(string jwt, string email);
-        Task<Result<bool, DomainError>> AuthenticateToken(string jwt);
+        Task<Result<LoggedDto, CustomError>> Login(LoginDto loginDto);
+        Result<bool, CustomError> AuthenticateEmail(string jwt, string email);
+        Task<Result<bool, CustomError>> AuthenticateToken(string jwt);
     }
 }
