@@ -66,9 +66,7 @@ namespace StellarWallet.Application.Services
 
             var email = jwtEmailResponse.Value;
 
-            var userExists = await _unitOfWork.User.GetBy(nameof(User.Email), email) is not null;
-
-            return userExists;
+            return await _unitOfWork.User.GetBy(nameof(User.Email), email) is not null;
         }
     }
 }
