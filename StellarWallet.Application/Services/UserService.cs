@@ -23,10 +23,17 @@ namespace StellarWallet.Application.Services
         private readonly IMapper _mapper = mapper;
         private readonly CustomError _userNotFoundError = CustomError.NotFound("User not found");
 
-        public async Task<IEnumerable<UserDto>> GetAll()
+        public async Task<Result<IEnumerable<UserDto>, CustomError>> GetAll()
         {
-            IEnumerable<User> users = await _unitOfWork.User.GetAll();
-            return _mapper.Map<UserDto[]>(users);
+            try
+            {
+                IEnumerable<User> users = await _unitOfWork.User.GetAll();
+                return _mapper.Map<UserDto[]>(users);
+            }
+            catch (Exception e)
+            {
+                return CustomError.InternalError(e.Message);
+            }
         }
 
         public async Task<Result<UserDto, CustomError>> GetById(int id, string jwt)
@@ -45,9 +52,7 @@ namespace StellarWallet.Application.Services
                 return CustomError.Forbidden();
             }
 
-            var mappedUser = _mapper.Map<UserDto>(foundUser);
-
-            return mappedUser;
+            return _mapper.Map<UserDto>(foundUser);
         }
 
         public async Task<Result<LoggedDto, CustomError>> Add(UserCreationDto user)

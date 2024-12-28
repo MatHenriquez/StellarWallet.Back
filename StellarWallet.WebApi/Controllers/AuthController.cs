@@ -16,20 +16,24 @@ namespace StellarWallet.WebApi.Controllers
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             if (!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
+            }
 
             try
             {
-                return Ok(await _authService.Login(loginDto));
+                var result = await _authService.Login(loginDto);
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "Invalid credentials")
-                    return Unauthorized(e.Message);
-                else if (e.Message == "User not found")
-                    return NotFound(e.Message);
-                else
-                    return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -40,15 +44,24 @@ namespace StellarWallet.WebApi.Controllers
 
             try
             {
-                string jwt = await HttpContext.GetTokenAsync("access_token") ?? throw new Exception("Unauthorized");
-                return Ok(await _authService.AuthenticateToken(jwt));
+                string? jwt = await HttpContext.GetTokenAsync("access_token");
+                if (jwt is null)
+                {
+                    return Unauthorized();
+                }
+
+                var result = await _authService.AuthenticateToken(jwt);
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "Unauthorized")
-                    return Unauthorized(e.Message);
-                else
-                    return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
     }

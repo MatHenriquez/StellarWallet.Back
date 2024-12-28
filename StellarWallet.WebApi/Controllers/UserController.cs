@@ -20,7 +20,21 @@ namespace StellarWallet.WebApi.Controllers
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Get()
         {
-            return Ok(await _userService.GetAll());
+            try
+            {
+                var result = await _userService.GetAll();
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result.Error);
+                }
+
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {e.Message}");
+            }
         }
 
         [HttpGet("{id}")]
@@ -29,15 +43,25 @@ namespace StellarWallet.WebApi.Controllers
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync("access_token") ?? throw new Exception("Unauthorized");
+                string? jwt = await HttpContext.GetTokenAsync("access_token");
 
-                return Ok(await _userService.GetById(id, jwt));
+                if (jwt is null)
+                {
+                    return Unauthorized();
+                }
+
+                var result = await _userService.GetById(id, jwt);
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result.Error);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "Unauthorized") return Unauthorized();
-                else if (e.Message == "User not found") return NotFound(e.Message);
-                else return StatusCode(500, $"Error: {e.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {e.Message}");
             }
         }
 
@@ -54,12 +78,12 @@ namespace StellarWallet.WebApi.Controllers
                 }
                 else
                 {
-                    return StatusCode(result.Error.Code, result.Error.Message);
+                    return StatusCode(result.Error.Code, result.Error);
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(500, $"Internal server error: {e.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
             }
         }
 
@@ -69,15 +93,23 @@ namespace StellarWallet.WebApi.Controllers
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync("access_token") ?? throw new Exception("Unauthorized");
-                await _userService.Update(user, jwt);
-                return Ok();
+                string? jwt = await HttpContext.GetTokenAsync("access_token");
+                if (jwt is null)
+                {
+                    return Unauthorized();
+                }
+
+                var result = await _userService.Update(user, jwt);
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result.Error);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "Unauthorized") return Unauthorized();
-                else if (e.Message == "User not found") return NotFound(e.Message);
-                else return StatusCode(500, $"Error: {e.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {e.Message}");
             }
 
         }
@@ -88,19 +120,28 @@ namespace StellarWallet.WebApi.Controllers
         {
             try
             {
-                string jwt = await HttpContext.GetTokenAsync("access_token") ?? throw new Exception("Unauthorized");
-                await _userService.Delete(id, jwt);
-                return Ok();
+                string? jwt = await HttpContext.GetTokenAsync("access_token");
+                if (jwt is null)
+                {
+                    return Unauthorized();
+                }
+
+                var result = await _userService.Delete(id, jwt);
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result.Error);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "Unauthorized") return Unauthorized();
-                else if (e.Message == "User not found") return NotFound(e.Message);
-                else return StatusCode(500, $"Error: {e.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {e.Message}");
             }
         }
 
-        [HttpPost("wallet")]
+        [HttpPost("Wallet")]
         [Authorize]
         public async Task<IActionResult> AddWallet([FromBody] AddWalletDto wallet)
         {
@@ -108,20 +149,22 @@ namespace StellarWallet.WebApi.Controllers
             {
                 string? jwt = await HttpContext.GetTokenAsync("access_token");
                 if (jwt is null)
+                {
                     return Unauthorized();
-                await _userService.AddWallet(wallet, jwt);
-                return Ok();
+                }
+
+                var result = await _userService.AddWallet(wallet, jwt);
+
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(result.Error.Code, result.Error);
+                }
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-                if (e.Message == "User not found")
-                    return NotFound(e.Message);
-                else if (e.Message == "Error adding wallet: Wallet already exists")
-                    return Conflict(e.Message);
-                else if (e.Message == "Error adding wallet: User already has 5 wallets")
-                    return Conflict(e.Message);
-                else
-                    return StatusCode(500, $"Internal server error: {e.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
             }
         }
     }
