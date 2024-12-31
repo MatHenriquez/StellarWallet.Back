@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using StellarWallet.Infrastructure;
@@ -16,7 +15,6 @@ internal class StellarWalletWebApplicationFactory : WebApplicationFactory<Progra
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll(typeof(DbContextOptions<DatabaseContext>));
-            var connectionString = GetConnectionString();
 
             services.AddDbContext<DatabaseContext>(options =>
             {
@@ -26,15 +24,6 @@ internal class StellarWalletWebApplicationFactory : WebApplicationFactory<Progra
             var dbContext = CreateDatabaseContext(services);
             dbContext.Database.EnsureCreated();
         });
-    }
-
-    private static string? GetConnectionString()
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddUserSecrets<StellarWalletWebApplicationFactory>()
-            .Build();
-
-        return configuration.GetConnectionString("StellarWalletTestDatabase");
     }
 
     private static DatabaseContext CreateDatabaseContext(IServiceCollection services)
