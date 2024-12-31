@@ -11,18 +11,18 @@ namespace StellarWallet.Infrastructure.Services;
 
 public class JwtService(IConfiguration config) : IJwtService
 {
-    private readonly string? secretKey = config.GetSection("Jwt").GetSection("Key").Value;
-    private readonly string? issuer = config.GetSection("Jwt").GetSection("Issuer").Value;
-    private readonly string? audience = config.GetSection("Jwt").GetSection("Audience").Value;
+    private readonly string? _secretKey = config.GetSection("Jwt").GetSection("Key").Value;
+    private readonly string? _issuer = config.GetSection("Jwt").GetSection("Issuer").Value;
+    private readonly string? _audience = config.GetSection("Jwt").GetSection("Audience").Value;
 
     public Result<string, CustomError> CreateToken(string email, string role)
     {
-        if (secretKey is null)
+        if (_secretKey is null)
         {
             return CustomError.NotFound("No secret key found.");
         }
 
-        var keyBytes = Encoding.ASCII.GetBytes(secretKey);
+        var keyBytes = Encoding.ASCII.GetBytes(_secretKey);
         var claims = new ClaimsIdentity();
 
         claims.AddClaim(new Claim(ClaimTypes.NameIdentifier, email));
@@ -32,9 +32,12 @@ public class JwtService(IConfiguration config) : IJwtService
         {
             Subject = claims,
             Expires = DateTime.UtcNow.AddYears(100),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature),
-            Issuer = issuer,
-            Audience = audience
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(keyBytes),
+                SecurityAlgorithms.HmacSha256Signature
+            ),
+            Issuer = _issuer,
+            Audience = _audience,
         };
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenConfig = tokenHandler.CreateToken(tokenDescriptor);
@@ -46,19 +49,19 @@ public class JwtService(IConfiguration config) : IJwtService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        if (secretKey is null)
+        if (_secretKey is null)
         {
             return CustomError.NotFound("No secret key found.");
         }
 
-        var keyBytes = Encoding.ASCII.GetBytes(secretKey);
+        var keyBytes = Encoding.ASCII.GetBytes(_secretKey);
 
         var validationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
         };
 
         var claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out _);
