@@ -1,8 +1,7 @@
-﻿namespace StellarWallet.Domain.Structs
+﻿namespace StellarWallet.Domain.Structs;
+
+public struct AccountKeyPair
 {
-    public struct AccountKeyPair
-    {
-        public string PublicKey { get; set; }
-        public string SecretKey { get; set; }
-    }
+    public string PublicKey { get; set; }
+    public string SecretKey { get; set; }
 }

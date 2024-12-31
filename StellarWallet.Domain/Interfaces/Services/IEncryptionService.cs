@@ -1,8 +1,7 @@
-﻿namespace StellarWallet.Domain.Interfaces.Services
+﻿namespace StellarWallet.Domain.Interfaces.Services;
+
+public interface IEncryptionService
 {
-    public interface IEncryptionService
-    {
-        string Encrypt(string text);
-        bool Verify(string text, string hash);
-    }
+    string Encrypt(string text);
+    bool Verify(string text, string hash);
 }

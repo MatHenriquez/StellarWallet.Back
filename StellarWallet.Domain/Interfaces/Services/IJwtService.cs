@@ -1,11 +1,10 @@
 ﻿using StellarWallet.Domain.Errors;
 using StellarWallet.Domain.Result;
 
-namespace StellarWallet.Domain.Interfaces.Services
+namespace StellarWallet.Domain.Interfaces.Services;
+
+public interface IJwtService
 {
-    public interface IJwtService
-    {
-        Result<string, CustomError> CreateToken(string email, string role);
-        Result<string, CustomError> DecodeToken(string token);
-    }
+    Result<string, CustomError> CreateToken(string email, string role);
+    Result<string, CustomError> DecodeToken(string token);
 }

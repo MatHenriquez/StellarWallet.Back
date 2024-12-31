@@ -1,9 +1,8 @@
 ﻿using StellarWallet.Domain.Entities;
 
-namespace StellarWallet.Domain.Interfaces.Persistence
+namespace StellarWallet.Domain.Interfaces.Persistence;
+
+public interface IUserContactRepository : IRepository<UserContact>
 {
-    public interface IUserContactRepository : IRepository<UserContact>
-    {
-        Task Delete(int id);
-    }
+    Task Delete(int id);
 }

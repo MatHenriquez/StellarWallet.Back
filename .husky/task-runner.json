@@ -2,10 +2,26 @@
    "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
    "tasks": [
       {
-         "name": "prettier",
-         "command": "npx",
-         "args": ["prettier", "--ignore-unknown", "--write", "${staged}"],
-         "pathMode": "absolute"
-       }
+         "name": "Run csharpier",
+         "command": "dotnet",
+         "args": [
+            "csharpier",
+            "${staged}"
+         ],
+         "include": [
+            "**/*.cs"
+         ]
+      },
+      {
+         "name": "Run SonarAnalyzer",
+         "command": "dotnet",
+         "args": [
+            "build",
+            "/p:EnableStyleCopAnalyzers=true"
+         ],
+         "include": [
+            "**/*.csproj"
+         ]
+      }
    ]
 }

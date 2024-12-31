@@ -1,70 +1,69 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using StellarWallet.Domain.Interfaces.Persistence;
-using System.Linq.Expressions;
 
-namespace StellarWallet.Infrastructure.Repositories
+namespace StellarWallet.Infrastructure.Repositories;
+
+public class Repository<T> : IRepository<T> where T : class
 {
-    public class Repository<T> : IRepository<T> where T : class
+    private readonly DatabaseContext _context;
+    internal DbSet<T> dbSet;
+
+    public Repository(DatabaseContext context)
     {
-        private readonly DatabaseContext _context;
-        internal DbSet<T> dbSet;
+        _context = context;
+        dbSet = _context.Set<T>();
+    }
 
-        public Repository(DatabaseContext context)
+    public async Task Add(T entity)
+    {
+        await dbSet.AddAsync(entity);
+        await _context.SaveChangesAsync();
+    }
+
+    public void Delete(T entity)
+    {
+        dbSet.Remove(entity);
+    }
+
+    public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>>? filter = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string? includeProperties = null, bool istracking = true)
+    {
+        IQueryable<T> query = dbSet;
+
+        if (filter != null)
         {
-            _context = context;
-            dbSet = _context.Set<T>();
+            query = query.Where(filter);
         }
 
-        public async Task Add(T entity)
+        if (includeProperties != null)
         {
-            await dbSet.AddAsync(entity);
-            await _context.SaveChangesAsync();
-        }
-
-        public void Delete(T entity)
-        {
-            dbSet.Remove(entity);
-        }
-
-        public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>>? filter = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string? includeProperties = null, bool istracking = true)
-        {
-            IQueryable<T> query = dbSet;
-
-            if (filter != null)
+            foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                query = query.Where(filter);
+                query = query.Include(includeProperty);
             }
-
-            if (includeProperties != null)
-            {
-                foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    query = query.Include(includeProperty);
-                }
-            }
-
-            if (orderBy != null)
-            {
-                query = orderBy(query);
-            }
-
-            if (!istracking)
-            {
-                query = query.AsNoTracking();
-            }
-
-            return await query.ToListAsync();
         }
 
-        public async Task<T?> GetById(int id)
+        if (orderBy != null)
         {
-            return await dbSet.FindAsync(id);
+            query = orderBy(query);
         }
 
-        public void Update(T entity)
+        if (!istracking)
         {
-            dbSet.Update(entity);
-            _context.SaveChangesAsync();
+            query = query.AsNoTracking();
         }
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<T?> GetById(int id)
+    {
+        return await dbSet.FindAsync(id);
+    }
+
+    public void Update(T entity)
+    {
+        dbSet.Update(entity);
+        _context.SaveChangesAsync();
     }
 }

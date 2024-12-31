@@ -1,10 +1,9 @@
 ﻿using StellarWallet.Domain.Entities;
 
-namespace StellarWallet.Domain.Interfaces.Persistence
+namespace StellarWallet.Domain.Interfaces.Persistence;
+
+public interface IUserRepository : IRepository<User>
 {
-    public interface IUserRepository : IRepository<User>
-    {
-        Task<User?> GetBy(string criteria, string value);
-        Task Delete(int id);
-    }
+    Task<User?> GetBy(string criteria, string value);
+    Task Delete(int id);
 }
