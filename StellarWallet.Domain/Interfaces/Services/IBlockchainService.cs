@@ -1,6 +1,5 @@
 ﻿using StellarWallet.Domain.Entities;
 using StellarWallet.Domain.Errors;
-using StellarWallet.Domain.Interfaces.Result;
 using StellarWallet.Domain.Result;
 using StellarWallet.Domain.Structs;
 

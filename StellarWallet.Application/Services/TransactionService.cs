@@ -5,10 +5,8 @@ using StellarWallet.Application.Utilities;
 using StellarWallet.Domain.Entities;
 using StellarWallet.Domain.Errors;
 using StellarWallet.Domain.Interfaces.Persistence;
-using StellarWallet.Domain.Interfaces.Result;
 using StellarWallet.Domain.Interfaces.Services;
 using StellarWallet.Domain.Result;
-using StellarWallet.Domain.Structs;
 
 namespace StellarWallet.Application.Services;
 

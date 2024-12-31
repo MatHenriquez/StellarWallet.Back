@@ -1,6 +1,4 @@
-﻿using StellarWallet.Domain.Result;
-
-namespace StellarWallet.Domain.Interfaces.Result;
+﻿namespace StellarWallet.Domain.Interfaces.Result;
 
 public interface IResult<out TValue, out TError>
 {

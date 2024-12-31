@@ -7,7 +7,6 @@ using StellarWallet.Domain.Errors;
 using StellarWallet.Domain.Interfaces.Persistence;
 using StellarWallet.Domain.Interfaces.Services;
 using StellarWallet.Domain.Result;
-using StellarWallet.Domain.Structs;
 
 namespace StellarWallet.Application.Services;
 
