@@ -13,10 +13,10 @@ public class UserRepository : Repository<User>, IUserRepository
         _context = context;
     }
 
-    public async Task<User?> GetBy(string paramName, string paramValue)
+    public async Task<User?> GetBy(string criteria, string value)
     {
-        var propertyInfo = typeof(User).GetProperty(paramName) ?? throw new ArgumentException($"Invalid property: '{paramName}'.");
-        var query = _context.Users.Where(u => EF.Property<string>(u, propertyInfo.Name) == paramValue).Include(u => u.BlockchainAccounts).Include(u => u.UserContacts);
+        var propertyInfo = typeof(User).GetProperty(criteria) ?? throw new ArgumentException($"Invalid property: '{criteria}'.");
+        var query = _context.Users.Where(u => EF.Property<string>(u, propertyInfo.Name) == value).Include(u => u.BlockchainAccounts).Include(u => u.UserContacts);
 
         try
         {
@@ -30,7 +30,7 @@ public class UserRepository : Repository<User>, IUserRepository
 
     public async Task Delete(int id)
     {
-        var foundUser = await GetById(id) ?? throw new Exception("User not found");
+        var foundUser = await GetById(id) ?? throw new KeyNotFoundException("User not found");
         _context.Users.Remove(foundUser);
         await _context.SaveChangesAsync();
     }

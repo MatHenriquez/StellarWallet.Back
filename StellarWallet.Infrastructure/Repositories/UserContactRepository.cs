@@ -14,7 +14,7 @@ public class UserContactRepository : Repository<UserContact>, IUserContactReposi
 
     public async Task Delete(int id)
     {
-        var foundUserContact = await GetById(id) ?? throw new Exception("User contact not found");
+        var foundUserContact = await GetById(id) ?? throw new KeyNotFoundException("User contact not found");
         _context.UserContacts.Remove(foundUserContact);
         await _context.SaveChangesAsync();
     }
