@@ -263,6 +263,10 @@ dotnet_style_collection_initializer = true:suggestion
 dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
 dotnet_style_prefer_conditional_expression_over_assignment = true:silent
 
+# Exclude migrations
+[**/Migrations/**/*.cs]
+dotnet_analyzer_diagnostic.category-Style.severity = none
+
 ##
 ## SonarAnalyzers.CSharp
 ##
