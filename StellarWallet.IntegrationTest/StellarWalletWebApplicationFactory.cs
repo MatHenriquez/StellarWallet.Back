@@ -7,41 +7,40 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using StellarWallet.Infrastructure;
 
-namespace StellarWallet.IntegrationTest
+namespace StellarWallet.IntegrationTest;
+
+internal class StellarWalletWebApplicationFactory : WebApplicationFactory<Program>
 {
-    internal class StellarWalletWebApplicationFactory : WebApplicationFactory<Program>
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        builder.ConfigureTestServices(services =>
         {
-            builder.ConfigureTestServices(services =>
+            services.RemoveAll(typeof(DbContextOptions<DatabaseContext>));
+            var connectionString = GetConnectionString();
+
+            services.AddDbContext<DatabaseContext>(options =>
             {
-                services.RemoveAll(typeof(DbContextOptions<DatabaseContext>));
-                var connectionString = GetConnectionString();
-
-                services.AddDbContext<DatabaseContext>(options =>
-                {
-                    options.UseInMemoryDatabase(Guid.NewGuid().ToString());
-                });
-
-                var dbContext = CreateDatabaseContext(services);
-                dbContext.Database.EnsureCreated();
+                options.UseInMemoryDatabase(Guid.NewGuid().ToString());
             });
-        }
 
-        private static string? GetConnectionString()
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddUserSecrets<StellarWalletWebApplicationFactory>()
-                .Build();
+            var dbContext = CreateDatabaseContext(services);
+            dbContext.Database.EnsureCreated();
+        });
+    }
 
-            return configuration.GetConnectionString("StellarWalletTestDatabase");
-        }
+    private static string? GetConnectionString()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddUserSecrets<StellarWalletWebApplicationFactory>()
+            .Build();
 
-        private static DatabaseContext CreateDatabaseContext(IServiceCollection services)
-        {
-            var serviceProvider = services.BuildServiceProvider();
-            var scope = serviceProvider.CreateScope();
-            return scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-        }
+        return configuration.GetConnectionString("StellarWalletTestDatabase");
+    }
+
+    private static DatabaseContext CreateDatabaseContext(IServiceCollection services)
+    {
+        var serviceProvider = services.BuildServiceProvider();
+        var scope = serviceProvider.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<DatabaseContext>();
     }
 }

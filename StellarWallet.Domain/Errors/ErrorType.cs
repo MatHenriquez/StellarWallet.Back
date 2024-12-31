@@ -1,13 +1,12 @@
-﻿namespace StellarWallet.Domain.Errors
+﻿namespace StellarWallet.Domain.Errors;
+
+public enum ErrorType
 {
-    public enum ErrorType
-    {
-        NotFound,
-        Invalid,
-        Conflict,
-        ExternalServiceError,
-        UnauthorizedError,
-        InternalError,
-        Forbidden
-    }
+    NotFound,
+    Invalid,
+    Conflict,
+    ExternalServiceError,
+    UnauthorizedError,
+    InternalError,
+    Forbidden
 }

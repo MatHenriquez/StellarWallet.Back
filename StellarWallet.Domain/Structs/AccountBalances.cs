@@ -1,9 +1,8 @@
-﻿namespace StellarWallet.Domain.Structs
+﻿namespace StellarWallet.Domain.Structs;
+
+public struct AccountBalances
 {
-    public struct AccountBalances
-    {
-        public string Asset { get; set; }
-        public string Amount { get; set; }
-        public string Issuer { get; set; }
-    }
+    public string Asset { get; set; }
+    public string Amount { get; set; }
+    public string Issuer { get; set; }
 }

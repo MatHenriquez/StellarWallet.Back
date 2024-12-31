@@ -1,22 +1,21 @@
-﻿namespace StellarWallet.Application.Utilities
+﻿namespace StellarWallet.Application.Utilities;
+
+public static class Paginate
 {
-    public static class Paginate
+    public static List<T> PaginateQuery<T>(List<T> query, int pageNumber, int pageSize)
     {
-        public static List<T> PaginateQuery<T>(List<T> query, int pageNumber, int pageSize)
-        {
-            ValidatePageNumber(pageNumber, GetTotalPages(query.Count(), pageSize));
-            return query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
-        }
+        ValidatePageNumber(pageNumber, GetTotalPages(query.Count(), pageSize));
+        return query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+    }
 
-        public static int GetTotalPages(int totalItems, int pageSize)
-        {
-            return (int)Math.Ceiling(totalItems / (double)pageSize);
-        }
+    public static int GetTotalPages(int totalItems, int pageSize)
+    {
+        return (int)Math.Ceiling(totalItems / (double)pageSize);
+    }
 
-        private static void ValidatePageNumber(int pageNumber, int totalPages)
-        {
-            if (pageNumber <= 0 || pageNumber > totalPages)
-                throw new Exception("Invalid page number.");
-        }
+    private static void ValidatePageNumber(int pageNumber, int totalPages)
+    {
+        if (pageNumber <= 0 || pageNumber > totalPages)
+            throw new Exception("Invalid page number.");
     }
 }

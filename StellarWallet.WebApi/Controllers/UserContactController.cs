@@ -4,105 +4,104 @@ using Microsoft.AspNetCore.Mvc;
 using StellarWallet.Application.Dtos.Requests;
 using StellarWallet.Application.Interfaces;
 
-namespace StellarWallet.WebApi.Controllers
+namespace StellarWallet.WebApi.Controllers;
+
+[ApiController]
+[Authorize]
+[Route("[controller]")]
+public class UserContactController(IUserContactService userContactService) : ControllerBase
 {
-    [ApiController]
-    [Authorize]
-    [Route("[controller]")]
-    public class UserContactController(IUserContactService userContactService) : ControllerBase
+    private readonly IUserContactService _userContactService = userContactService;
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetAll(int id)
     {
-        private readonly IUserContactService _userContactService = userContactService;
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetAll(int id)
+        try
         {
-            try
+            var jwt = await HttpContext.GetTokenAsync("access_token");
+            if (jwt is null)
             {
-                string? jwt = await HttpContext.GetTokenAsync("access_token");
-                if (jwt is null)
-                {
-                    return Unauthorized();
-                }
-
-                var result = await _userContactService.GetAll(id, jwt);
-
-                if (!result.IsSuccess)
-                {
-                    return StatusCode(result.Error.Code, result);
-                }
-
-                return Ok(result);
+                return Unauthorized();
             }
-            catch (Exception e)
+
+            var result = await _userContactService.GetAll(id, jwt);
+
+            if (!result.IsSuccess)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
+                return StatusCode(result.Error.Code, result);
             }
+
+            return Ok(result);
         }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        catch (Exception e)
         {
-            try
-            {
-                var result = await _userContactService.Delete(id);
-
-                if (!result.IsSuccess)
-                {
-                    return StatusCode(result.Error.Code, result);
-                }
-
-                return Ok(result);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
-            }
+            return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
         }
+    }
 
-        [HttpPost()]
-        public async Task<IActionResult> Post(AddContactDto userContact)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
         {
-            try
+            var result = await _userContactService.Delete(id);
+
+            if (!result.IsSuccess)
             {
-                string? jwt = await HttpContext.GetTokenAsync("access_token");
-                if (jwt is null)
-                {
-                    return Unauthorized();
-                }
-
-                var result = await _userContactService.Add(userContact, jwt);
-
-                if (!result.IsSuccess)
-                {
-                    return StatusCode(result.Error.Code, result);
-                }
-
-                return Ok(result);
+                return StatusCode(result.Error.Code, result);
             }
-            catch (Exception e)
-            {
-                return StatusCode(500, $"Internal server error: {e.Message}");
-            }
+
+            return Ok(result);
         }
-
-        [HttpPut()]
-        public async Task<IActionResult> Put(UpdateContactDto userContact)
+        catch (Exception e)
         {
-            try
-            {
-                var result = await _userContactService.Update(userContact);
+            return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
+        }
+    }
 
-                if (!result.IsSuccess)
-                {
-                    return StatusCode(result.Error.Code, result);
-                }
-
-                return Ok(result);
-            }
-            catch (Exception e)
+    [HttpPost()]
+    public async Task<IActionResult> Post(AddContactDto userContact)
+    {
+        try
+        {
+            var jwt = await HttpContext.GetTokenAsync("access_token");
+            if (jwt is null)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
+                return Unauthorized();
             }
+
+            var result = await _userContactService.Add(userContact, jwt);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.Error.Code, result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Internal server error: {e.Message}");
+        }
+    }
+
+    [HttpPut()]
+    public async Task<IActionResult> Put(UpdateContactDto userContact)
+    {
+        try
+        {
+            var result = await _userContactService.Update(userContact);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.Error.Code, result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
         }
     }
 }

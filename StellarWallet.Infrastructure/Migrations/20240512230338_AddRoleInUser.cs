@@ -2,28 +2,27 @@
 
 #nullable disable
 
-namespace StellarWallet.Infrastructure.Migrations
+namespace StellarWallet.Infrastructure.Migrations;
+
+/// <inheritdoc />
+public partial class AddRoleInUser : Migration
 {
     /// <inheritdoc />
-    public partial class AddRoleInUser : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.AddColumn<string>(
-                name: "Role",
-                table: "Users",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
-        }
+        migrationBuilder.AddColumn<string>(
+            name: "Role",
+            table: "Users",
+            type: "nvarchar(max)",
+            nullable: false,
+            defaultValue: "");
+    }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropColumn(
-                name: "Role",
-                table: "Users");
-        }
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropColumn(
+            name: "Role",
+            table: "Users");
     }
 }

@@ -1,8 +1,7 @@
-﻿namespace StellarWallet.Application.Dtos.Responses
+﻿namespace StellarWallet.Application.Dtos.Responses;
+
+public class BlockchainAccountDto
 {
-    public class BlockchainAccountDto
-    {
-        public string? PublicKey { get; set; }
-        public string? SecretKey { get; set; }
-    }
+    public string? PublicKey { get; set; }
+    public string? SecretKey { get; set; }
 }

@@ -3,15 +3,14 @@ using StellarWallet.Application.Dtos.Responses;
 using StellarWallet.Domain.Errors;
 using StellarWallet.Domain.Result;
 
-namespace StellarWallet.Application.Interfaces
+namespace StellarWallet.Application.Interfaces;
+
+public interface IUserService
 {
-    public interface IUserService
-    {
-        Task<Result<IEnumerable<UserDto>, CustomError>> GetAll();
-        Task<Result<UserDto, CustomError>> GetById(int id, string jwt);
-        Task<Result<LoggedDto, CustomError>> Add(UserCreationDto user);
-        Task<Result<bool, CustomError>> Update(UserUpdateDto user, string jwt);
-        Task<Result<bool, CustomError>> Delete(int id, string jwt);
-        Task<Result<bool, CustomError>> AddWallet(AddWalletDto wallet, string jwt);
-    }
+    Task<Result<IEnumerable<UserDto>, CustomError>> GetAll();
+    Task<Result<UserDto, CustomError>> GetById(int id, string jwt);
+    Task<Result<LoggedDto, CustomError>> Add(UserCreationDto user);
+    Task<Result<bool, CustomError>> Update(UserUpdateDto user, string jwt);
+    Task<Result<bool, CustomError>> Delete(int id, string jwt);
+    Task<Result<bool, CustomError>> AddWallet(AddWalletDto wallet, string jwt);
 }

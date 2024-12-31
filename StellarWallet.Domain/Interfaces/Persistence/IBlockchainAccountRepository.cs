@@ -1,8 +1,7 @@
 ﻿using StellarWallet.Domain.Entities;
 
-namespace StellarWallet.Domain.Interfaces.Persistence
+namespace StellarWallet.Domain.Interfaces.Persistence;
+
+public interface IBlockchainAccountRepository : IRepository<BlockchainAccount>
 {
-    public interface IBlockchainAccountRepository : IRepository<BlockchainAccount>
-    {
-    }
 }
