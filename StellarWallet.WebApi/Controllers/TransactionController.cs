@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StellarWallet.Application.Dtos.Requests;
 using StellarWallet.Application.Interfaces;
 using StellarWallet.Domain.Errors;
 using StellarWallet.Domain.Result;
+using StellarWallet.WebApi.Helpers;
 
 namespace StellarWallet.WebApi.Controllers;
 
@@ -14,92 +14,62 @@ namespace StellarWallet.WebApi.Controllers;
 public class TransactionsController(ITransactionService transactionService) : ControllerBase
 {
     private readonly ITransactionService _transactionService = transactionService;
-    private readonly string _accessToken = "access_token";
 
     [HttpPost("AccountCreation")]
     public async Task<ActionResult<Result<bool, CustomError>>> CreateAccount()
     {
-        try
+        var jwt = await JwtTokenHelper.GetFromContextAsync(HttpContext);
+
+        var result = await _transactionService.CreateAccount(jwt);
+
+        if (!result.IsSuccess)
         {
-            var jwt = await HttpContext.GetTokenAsync(_accessToken);
-            if (jwt is null)
-            {
-                return Unauthorized();
-            }
-
-            var result = await _transactionService.CreateAccount(jwt);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result);
-            }
-
-            return Ok(result);
+            return StatusCode(result.Error.Code, result);
         }
-        catch (Exception e)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-        }
+
+        return Ok(result);
     }
 
     [HttpPost("Payments")]
-    public async Task<ActionResult<Result<bool, CustomError>>> SendPayment([FromBody] SendPaymentDto sendPaymentDto)
+    public async Task<ActionResult<Result<bool, CustomError>>> SendPayment(
+        [FromBody] SendPaymentDto sendPaymentDto
+    )
     {
-        try
-        {
-            var jwt = await HttpContext.GetTokenAsync(_accessToken);
-            if (jwt is null)
-            {
-                return Unauthorized();
-            }
+        var jwt = await JwtTokenHelper.GetFromContextAsync(HttpContext);
 
-            var paymentResult = await _transactionService.SendPayment(sendPaymentDto, jwt);
+        var paymentResult = await _transactionService.SendPayment(sendPaymentDto, jwt);
 
-            if (!paymentResult.IsSuccess)
-            {
-                return StatusCode(paymentResult.Error.Code, paymentResult.Error.Message);
-            }
-            return Ok();
-        }
-        catch
+        if (!paymentResult.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, "There was an error processing the payment.");
+            return StatusCode(paymentResult.Error.Code, paymentResult.Error.Message);
         }
+
+        return Ok();
     }
 
     [HttpGet("Payments")]
-    public async Task<ActionResult<Result<bool, CustomError>>> GetPayments([FromQuery] int pageNumber, int pageSize)
+    public async Task<ActionResult<Result<bool, CustomError>>> GetPayments(
+        [FromQuery] int pageNumber,
+        int pageSize
+    )
     {
-        try
+        var jwt = await JwtTokenHelper.GetFromContextAsync(HttpContext);
+
+        var result = await _transactionService.GetTransaction(jwt, pageNumber, pageSize);
+
+        if (!result.IsSuccess)
         {
-            var jwt = await HttpContext.GetTokenAsync(_accessToken);
-            if (jwt is null)
-            {
-                return Unauthorized();
-            }
-
-            var result = await _transactionService.GetTransaction(jwt, pageNumber, pageSize);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result);
-            }
-
-            return Ok(result);
+            return StatusCode(result.Error.Code, result);
         }
-        catch (Exception e)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-        }
+
+        return Ok(result);
     }
 
     [HttpPost("TestFund")]
-    public async Task<ActionResult<Result<bool, CustomError>>> GetTestFunds([FromBody] GetTestFundsDto getTestFundsDto)
+    public async Task<ActionResult<Result<bool, CustomError>>> GetTestFunds(
+        [FromBody] GetTestFundsDto getTestFundsDto
+    )
     {
-        var jwt = await HttpContext.GetTokenAsync(_accessToken);
-        if (jwt is null)
-        { return Unauthorized(); }
-
         var result = await _transactionService.GetTestFunds(getTestFundsDto.PublicKey);
 
         if (!result.IsSuccess)
@@ -111,29 +81,17 @@ public class TransactionsController(ITransactionService transactionService) : Co
     }
 
     [HttpGet("Balances")]
-    public async Task<ActionResult<Result<bool, CustomError>>> GetBalances([FromQuery] GetBalancesDto getBalancesDto)
+    public async Task<ActionResult<Result<bool, CustomError>>> GetBalances(
+        [FromQuery] GetBalancesDto getBalancesDto
+    )
     {
-        var jwt = await HttpContext.GetTokenAsync(_accessToken);
-        if (jwt is null)
+        var result = await _transactionService.GetBalances(getBalancesDto);
+
+        if (!result.IsSuccess)
         {
-            return Unauthorized();
+            return StatusCode(result.Error.Code, result);
         }
 
-        try
-        {
-            var result = await _transactionService.GetBalances(getBalancesDto);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result);
-            }
-
-            return Ok(result);
-        }
-        catch (Exception e)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-        }
+        return Ok(result);
     }
 }
-
