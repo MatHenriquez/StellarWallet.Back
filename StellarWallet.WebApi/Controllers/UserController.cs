@@ -6,13 +6,13 @@ using StellarWallet.Application.Dtos.Responses;
 using StellarWallet.Application.Interfaces;
 using StellarWallet.Domain.Errors;
 using StellarWallet.Domain.Result;
+using StellarWallet.WebApi.Helpers;
 
 namespace StellarWallet.WebApi.Controllers;
 
-
 [ApiController]
 [Route("[controller]")]
-public class UserController(IUserService userService) : ControllerBase
+public class UsersController(IUserService userService) : ControllerBase
 {
     private readonly IUserService _userService = userService;
 
@@ -20,151 +20,92 @@ public class UserController(IUserService userService) : ControllerBase
     [Authorize(Roles = "admin")]
     public async Task<ActionResult<Result<IEnumerable<UserDto>, CustomError>>> Get()
     {
-        try
-        {
-            var result = await _userService.GetAll();
+        var result = await _userService.GetAll();
 
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result.Error);
-            }
-
-            return Ok(result);
-        }
-        catch (Exception e)
+        if (!result.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {e.Message}");
+            return StatusCode(result.Error.Code, result.Error);
         }
+
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
     [Authorize]
     public async Task<ActionResult<Result<UserDto, CustomError>>> Get(int id)
     {
-        try
+        var jwt = await JwtTokenHelper.GetFromContextAsync(HttpContext);
+
+        var result = await _userService.GetById(id, jwt);
+
+        if (!result.IsSuccess)
         {
-            var jwt = await HttpContext.GetTokenAsync("access_token");
-
-            if (jwt is null)
-            {
-                return Unauthorized();
-            }
-
-            var result = await _userService.GetById(id, jwt);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result.Error);
-            }
-
-            return Ok(result);
+            return StatusCode(result.Error.Code, result.Error);
         }
-        catch (Exception e)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {e.Message}");
-        }
+
+        return Ok(result);
     }
 
     [HttpPost()]
     public async Task<ActionResult<Result<LoggedDto, CustomError>>> Post(UserCreationDto user)
     {
-        try
-        {
-            var result = await _userService.Add(user);
+        var result = await _userService.Add(user);
 
-            if (result.IsSuccess)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return StatusCode(result.Error.Code, result.Error);
-            }
-        }
-        catch (Exception e)
+        if (result.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
+            return Ok(result);
+        }
+        else
+        {
+            return StatusCode(result.Error.Code, result.Error);
         }
     }
 
     [HttpPut()]
     [Authorize]
-    public async Task<ActionResult<Result<bool,CustomError>>> Put(UserUpdateDto user)
+    public async Task<ActionResult<Result<bool, CustomError>>> Put(UserUpdateDto user)
     {
-        try
-        {
-            var jwt = await HttpContext.GetTokenAsync("access_token");
-            if (jwt is null)
-            {
-                return Unauthorized();
-            }
+        var jwt = await JwtTokenHelper.GetFromContextAsync(HttpContext);
 
-            var result = await _userService.Update(user, jwt);
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result.Error);
-            }
-
-            return Ok(result);
-        }
-        catch (Exception e)
+        var result = await _userService.Update(user, jwt);
+        if (!result.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {e.Message}");
+            return StatusCode(result.Error.Code, result.Error);
         }
 
+        return Ok(result);
     }
 
     [HttpDelete("{id}")]
     [Authorize]
     public async Task<ActionResult<Result<bool, CustomError>>> Delete(int id)
     {
-        try
+        var jwt = await JwtTokenHelper.GetFromContextAsync(HttpContext);
+        var result = await _userService.Delete(id, jwt);
+
+        if (!result.IsSuccess)
         {
-            var jwt = await HttpContext.GetTokenAsync("access_token");
-            if (jwt is null)
-            {
-                return Unauthorized();
-            }
-
-            var result = await _userService.Delete(id, jwt);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result.Error);
-            }
-
-            return Ok(result);
+            return StatusCode(result.Error.Code, result.Error);
         }
-        catch (Exception e)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {e.Message}");
-        }
+
+        return Ok(result);
     }
 
-    [HttpPost("Wallet")]
+    [HttpPost("Wallets")]
     [Authorize]
-    public async Task<ActionResult<Result<bool, CustomError>>> AddWallet([FromBody] AddWalletDto wallet)
+    public async Task<ActionResult<Result<bool, CustomError>>> AddWallet(
+        [FromBody] AddWalletDto wallet
+    )
     {
-        try
+        var jwt = await JwtTokenHelper.GetFromContextAsync(HttpContext);
+
+        var result = await _userService.AddWallet(wallet, jwt);
+
+        if (!result.IsSuccess)
         {
-            var jwt = await HttpContext.GetTokenAsync("access_token");
-            if (jwt is null)
-            {
-                return Unauthorized();
-            }
-
-            var result = await _userService.AddWallet(wallet, jwt);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result.Error);
-            }
-
-            return Ok(result);
+            return StatusCode(result.Error.Code, result.Error);
         }
-        catch (Exception e)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {e.Message}");
-        }
+
+        return Ok(result);
     }
 }

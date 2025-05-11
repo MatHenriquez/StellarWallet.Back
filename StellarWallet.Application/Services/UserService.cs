@@ -10,13 +10,12 @@ using StellarWallet.Domain.Result;
 
 namespace StellarWallet.Application.Services;
 
-public class UserService(IJwtService jwtService, IEncryptionService encryptionService, IMapper mapper, IBlockchainService stellarService, IBlockchainAccountRepository blockchainAccountRepository, IAuthService authService, IUnitOfWork unitOfWork
+public class UserService(IJwtService jwtService, IEncryptionService encryptionService, IMapper mapper, IBlockchainService stellarService, IAuthService authService, IUnitOfWork unitOfWork
     ) : IUserService
 {
     private readonly IJwtService _jwtService = jwtService;
     private readonly IEncryptionService _encryptionService = encryptionService;
     private readonly IBlockchainService _stellarService = stellarService;
-    private readonly IBlockchainAccountRepository _blockchainAccountRepository = blockchainAccountRepository;
     private readonly IAuthService _authService = authService;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
@@ -157,7 +156,7 @@ public class UserService(IJwtService jwtService, IEncryptionService encryptionSe
                 User = foundUser
             };
 
-            await _blockchainAccountRepository.Add(newAccount);
+            await _unitOfWork.BlockchainAccount.Add(newAccount);
             _unitOfWork.User.Update(foundUser);
 
             return true;

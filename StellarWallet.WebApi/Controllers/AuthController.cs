@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StellarWallet.Application.Dtos.Requests;
 using StellarWallet.Application.Interfaces;
 using StellarWallet.Domain.Errors;
 using StellarWallet.Domain.Result;
+using StellarWallet.WebApi.Helpers;
 
 namespace StellarWallet.WebApi.Controllers;
 
@@ -21,49 +21,29 @@ public class AuthController(IAuthService authService) : ControllerBase
         {
             return BadRequest(ModelState);
         }
+        var result = await _authService.Login(loginDto);
 
-        try
+        if (!result.IsSuccess)
         {
-            var result = await _authService.Login(loginDto);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result);
-            }
-
-            return Ok(result);
+            return StatusCode(result.Error.Code, result);
         }
-        catch (Exception e)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-        }
+
+        return Ok(result);
     }
 
     [Authorize]
     [HttpGet("UserToken")]
     public async Task<ActionResult<Result<bool, CustomError>>> UserToken()
     {
+        var jwt = await JwtTokenHelper.GetFromContextAsync(HttpContext);
 
-        try
+        var result = await _authService.AuthenticateToken(jwt);
+
+        if (!result.IsSuccess)
         {
-            var jwt = await HttpContext.GetTokenAsync("access_token");
-            if (jwt is null)
-            {
-                return Unauthorized();
-            }
-
-            var result = await _authService.AuthenticateToken(jwt);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.Error.Code, result);
-            }
-
-            return Ok(result);
+            return StatusCode(result.Error.Code, result);
         }
-        catch (Exception e)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-        }
+
+        return Ok(result);
     }
 }

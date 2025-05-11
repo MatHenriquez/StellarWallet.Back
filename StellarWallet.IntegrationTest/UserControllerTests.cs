@@ -22,7 +22,7 @@ public class UserControllerTests
 
         var client = application.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/User", request);
+        var response = await client.PostAsJsonAsync("/api/Users", request);
 
         response.EnsureSuccessStatusCode();
 
