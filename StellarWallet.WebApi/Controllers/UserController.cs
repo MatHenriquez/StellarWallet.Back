@@ -18,7 +18,7 @@ public class UserController(IUserService userService) : ControllerBase
 
     [HttpGet()]
     [Authorize(Roles = "admin")]
-    public async Task<IActionResult> Get()
+    public async Task<ActionResult<Result<IEnumerable<UserDto>, CustomError>>> Get()
     {
         try
         {
@@ -39,7 +39,7 @@ public class UserController(IUserService userService) : ControllerBase
 
     [HttpGet("{id}")]
     [Authorize]
-    public async Task<IActionResult> Get(int id)
+    public async Task<ActionResult<Result<UserDto, CustomError>>> Get(int id)
     {
         try
         {
@@ -89,7 +89,7 @@ public class UserController(IUserService userService) : ControllerBase
 
     [HttpPut()]
     [Authorize]
-    public async Task<IActionResult> Put(UserUpdateDto user)
+    public async Task<ActionResult<Result<bool,CustomError>>> Put(UserUpdateDto user)
     {
         try
         {
@@ -116,7 +116,7 @@ public class UserController(IUserService userService) : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult<Result<bool, CustomError>>> Delete(int id)
     {
         try
         {
@@ -143,7 +143,7 @@ public class UserController(IUserService userService) : ControllerBase
 
     [HttpPost("Wallet")]
     [Authorize]
-    public async Task<IActionResult> AddWallet([FromBody] AddWalletDto wallet)
+    public async Task<ActionResult<Result<bool, CustomError>>> AddWallet([FromBody] AddWalletDto wallet)
     {
         try
         {

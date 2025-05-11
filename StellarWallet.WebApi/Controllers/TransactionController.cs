@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StellarWallet.Application.Dtos.Requests;
 using StellarWallet.Application.Interfaces;
+using StellarWallet.Domain.Errors;
+using StellarWallet.Domain.Result;
 
 namespace StellarWallet.WebApi.Controllers;
 
@@ -15,7 +17,7 @@ public class TransactionController(ITransactionService transactionService) : Con
     private readonly string _accessToken = "access_token";
 
     [HttpPost("AccountCreation")]
-    public async Task<IActionResult> CreateAccount()
+    public async Task<ActionResult<Result<bool, CustomError>>> CreateAccount()
     {
         try
         {
@@ -41,7 +43,7 @@ public class TransactionController(ITransactionService transactionService) : Con
     }
 
     [HttpPost("Payment")]
-    public async Task<IActionResult> SendPayment([FromBody] SendPaymentDto sendPaymentDto)
+    public async Task<ActionResult<Result<bool, CustomError>>> SendPayment([FromBody] SendPaymentDto sendPaymentDto)
     {
         try
         {
@@ -66,7 +68,7 @@ public class TransactionController(ITransactionService transactionService) : Con
     }
 
     [HttpGet("Payment")]
-    public async Task<IActionResult> GetPayments([FromQuery] int pageNumber, int pageSize)
+    public async Task<ActionResult<Result<bool, CustomError>>> GetPayments([FromQuery] int pageNumber, int pageSize)
     {
         try
         {
@@ -92,7 +94,7 @@ public class TransactionController(ITransactionService transactionService) : Con
     }
 
     [HttpPost("TestFund")]
-    public async Task<IActionResult> GetTestFunds([FromBody] GetTestFundsDto getTestFundsDto)
+    public async Task<ActionResult<Result<bool, CustomError>>> GetTestFunds([FromBody] GetTestFundsDto getTestFundsDto)
     {
         var jwt = await HttpContext.GetTokenAsync(_accessToken);
         if (jwt is null)
@@ -109,7 +111,7 @@ public class TransactionController(ITransactionService transactionService) : Con
     }
 
     [HttpGet("Balance")]
-    public async Task<IActionResult> GetBalances([FromQuery] GetBalancesDto getBalancesDto)
+    public async Task<ActionResult<Result<bool, CustomError>>> GetBalances([FromQuery] GetBalancesDto getBalancesDto)
     {
         var jwt = await HttpContext.GetTokenAsync(_accessToken);
         if (jwt is null)
