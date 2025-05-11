@@ -87,6 +87,10 @@ internal class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        // Add custom middleware for exception handling
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
+
         var corsPolicyName = "AllowClient";
 
         builder.Services.AddCors(options =>
