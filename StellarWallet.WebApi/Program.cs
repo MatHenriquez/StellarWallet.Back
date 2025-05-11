@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,12 +12,16 @@ using StellarWallet.Domain.Interfaces.Services;
 using StellarWallet.Infrastructure;
 using StellarWallet.Infrastructure.Repositories;
 using StellarWallet.Infrastructure.Services;
+using StellarWallet.WebApi.Utilities;
 
 internal class Program
 {
+    private const string ROUTE_PREFIX = "api";
+    private const string DEFAULT_ENVIRONMENT = "test";
+
     private static async Task Main(string[] args)
     {
-        var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "test";
+        var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? DEFAULT_ENVIRONMENT;
 
         var builder = WebApplication.CreateBuilder(args);
 
@@ -53,22 +58,31 @@ internal class Program
                                       .AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "admin"))
                                       .AddPolicy("User", policy => policy.RequireClaim(ClaimTypes.Role, "user"));
 
-        builder.Services.AddControllers();
-        builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(connectionString, b => b.MigrationsAssembly("StellarWallet.Infrastructure"))); // Add DatabaseContext
-        builder.Services.AddScoped<IUserRepository, UserRepository>(); // Add UserRepository
-        builder.Services.AddScoped<IUserService, UserService>(); // Add UserService
-        builder.Services.AddScoped<IBlockchainService, StellarService>(); // Add BlockchainService
-        builder.Services.AddScoped<ITransactionService, TransactionService>(); // Add TransactionService
-        builder.Services.AddScoped<IAuthService, AuthService>(); // Add AuthService
-        builder.Services.AddScoped<IJwtService, JwtService>(); // Add JwtService
-        builder.Services.AddScoped<IEncryptionService, EncryptionService>(); // Add EncryptionService
-        builder.Services.AddScoped<IUserContactRepository, UserContactRepository>(); // Add UserContactRepository
-        builder.Services.AddScoped<IUserContactService, UserContactService>(); // Add UserContactService
-        builder.Services.AddScoped<IBlockchainAccountRepository, BlockchainAccountRepository>(); // Add BlockchainAccountRepository
-        builder.Services.AddAutoMapper(typeof(AutoMapperProfile)); // Add AutoMapper
+        // Add DbContext and UnitOfWork
+        builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(connectionString, b => b.MigrationsAssembly("StellarWallet.Infrastructure")));
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        builder.Services.AddControllers();
+        // Add services
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IBlockchainService, StellarService>();
+        builder.Services.AddScoped<ITransactionService, TransactionService>();
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IJwtService, JwtService>();
+        builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+        builder.Services.AddScoped<IUserContactService, UserContactService>();
+
+        // Add AutoMapper
+        builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+
+        // Add controllers
+        builder.Services.AddControllers(options =>
+        {
+            options.Conventions.Add(new RoutePrefixConvention(ROUTE_PREFIX));
+        }).AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
+
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
