@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StellarWallet.Application.Dtos.Requests;
+using StellarWallet.Application.Dtos.Responses;
 using StellarWallet.Application.Interfaces;
+using StellarWallet.Domain.Errors;
+using StellarWallet.Domain.Result;
 
 namespace StellarWallet.WebApi.Controllers;
 
@@ -14,7 +17,7 @@ public class UserContactController(IUserContactService userContactService) : Con
     private readonly IUserContactService _userContactService = userContactService;
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetAll(int id)
+    public async Task<ActionResult<Result<IEnumerable<UserContactsDto>, CustomError>>> GetAll(int id)
     {
         try
         {
@@ -40,7 +43,7 @@ public class UserContactController(IUserContactService userContactService) : Con
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult<Result<bool, CustomError>>> Delete(int id)
     {
         try
         {
@@ -60,7 +63,7 @@ public class UserContactController(IUserContactService userContactService) : Con
     }
 
     [HttpPost()]
-    public async Task<IActionResult> Post(AddContactDto userContact)
+    public async Task<ActionResult<Result<bool, CustomError>>> Post(AddContactDto userContact)
     {
         try
         {
@@ -86,7 +89,7 @@ public class UserContactController(IUserContactService userContactService) : Con
     }
 
     [HttpPut()]
-    public async Task<IActionResult> Put(UpdateContactDto userContact)
+    public async Task<ActionResult<Result<bool, CustomError>>> Put(UpdateContactDto userContact)
     {
         try
         {

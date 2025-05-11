@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StellarWallet.Application.Dtos.Requests;
 using StellarWallet.Application.Interfaces;
+using StellarWallet.Domain.Errors;
+using StellarWallet.Domain.Result;
 
 namespace StellarWallet.WebApi.Controllers;
 
@@ -13,7 +15,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     private readonly IAuthService _authService = authService;
 
     [HttpPost("Login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+    public async Task<ActionResult<Result<bool, CustomError>>> Login([FromBody] LoginDto loginDto)
     {
         if (!ModelState.IsValid)
         {
@@ -39,7 +41,7 @@ public class AuthController(IAuthService authService) : ControllerBase
 
     [Authorize]
     [HttpGet("UserToken")]
-    public async Task<IActionResult> UserToken()
+    public async Task<ActionResult<Result<bool, CustomError>>> UserToken()
     {
 
         try
