@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace StellarWallet.WebApi.Utilities;
 
-public class RoutePrefixConvention(string routePrefix) : IApplicationModelConvention
+internal class RoutePrefixConvention(string routePrefix) : IApplicationModelConvention
 {
     private readonly AttributeRouteModel _routePrefix = new(new RouteAttribute(routePrefix));
 
