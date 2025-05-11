@@ -12,7 +12,7 @@ namespace StellarWallet.WebApi.Controllers;
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class UserContactController(IUserContactService userContactService) : ControllerBase
+public class UserContactsController(IUserContactService userContactService) : ControllerBase
 {
     private readonly IUserContactService _userContactService = userContactService;
 

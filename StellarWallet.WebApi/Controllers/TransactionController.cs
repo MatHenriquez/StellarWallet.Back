@@ -11,7 +11,7 @@ namespace StellarWallet.WebApi.Controllers;
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class TransactionController(ITransactionService transactionService) : ControllerBase
+public class TransactionsController(ITransactionService transactionService) : ControllerBase
 {
     private readonly ITransactionService _transactionService = transactionService;
     private readonly string _accessToken = "access_token";
@@ -42,7 +42,7 @@ public class TransactionController(ITransactionService transactionService) : Con
         }
     }
 
-    [HttpPost("Payment")]
+    [HttpPost("Payments")]
     public async Task<ActionResult<Result<bool, CustomError>>> SendPayment([FromBody] SendPaymentDto sendPaymentDto)
     {
         try
@@ -67,7 +67,7 @@ public class TransactionController(ITransactionService transactionService) : Con
         }
     }
 
-    [HttpGet("Payment")]
+    [HttpGet("Payments")]
     public async Task<ActionResult<Result<bool, CustomError>>> GetPayments([FromQuery] int pageNumber, int pageSize)
     {
         try
@@ -110,7 +110,7 @@ public class TransactionController(ITransactionService transactionService) : Con
         return Ok(result);
     }
 
-    [HttpGet("Balance")]
+    [HttpGet("Balances")]
     public async Task<ActionResult<Result<bool, CustomError>>> GetBalances([FromQuery] GetBalancesDto getBalancesDto)
     {
         var jwt = await HttpContext.GetTokenAsync(_accessToken);

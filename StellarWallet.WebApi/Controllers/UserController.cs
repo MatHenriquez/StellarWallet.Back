@@ -12,7 +12,7 @@ namespace StellarWallet.WebApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class UserController(IUserService userService) : ControllerBase
+public class UsersController(IUserService userService) : ControllerBase
 {
     private readonly IUserService _userService = userService;
 
@@ -141,7 +141,7 @@ public class UserController(IUserService userService) : ControllerBase
         }
     }
 
-    [HttpPost("Wallet")]
+    [HttpPost("Wallets")]
     [Authorize]
     public async Task<ActionResult<Result<bool, CustomError>>> AddWallet([FromBody] AddWalletDto wallet)
     {
